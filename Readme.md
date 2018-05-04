@@ -8,9 +8,7 @@ Android: https://exp-shell-app-assets.s3-us-west-1.amazonaws.com/android%2F%40ka
 iOS: I don't have a mac
 
 ## Example 
-<img src="./assets/images/screenshot1.png" width="100" height="200" />
-
-<img src="./assets/images/screenshot3.png" width="100" height="200" />
+<img src="./assets/images/screenshot1.png" width="200" height="300" /> <img src="./assets/images/screenshot3.png" width="200" height="300" />
 
 
 ## Dependecies
