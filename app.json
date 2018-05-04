@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "MyProject",
-    "description": "A very interesting project.",
-    "slug": "MyProject",
+    "name": "Todo App",
+    "description": "Basic Todo Application for daily work",
+    "slug": "Todo-App",
     "privacy": "public",
     "sdkVersion": "27.0.0",
     "platforms": ["ios", "android"],
@@ -21,7 +21,11 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.shubh.todoApp"
+    },
+    "android": {
+      "package": "com.shubh.todoApp"
     }
   }
 }
