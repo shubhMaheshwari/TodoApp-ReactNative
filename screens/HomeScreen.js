@@ -1,4 +1,6 @@
 import React from 'react';
+
+// Import all dependencies from react native
 import {
   Image,
   Platform,
@@ -7,62 +9,136 @@ import {
   Text,
   TouchableOpacity,
   View,
+
+  // TODO App dependcies 
+  FlatList,
+  AsyncStorage,
+  Button,
+  TextInput,
+  Keyboard,
+
 } from 'react-native';
+
 import { WebBrowser } from 'expo';
 
 import { MonoText } from '../components/StyledText';
 
+// Conts helpful later
+const isAndroid = Platform.OS == "android";
+const viewPadding = 0;
+
 export default class HomeScreen extends React.Component {
   static navigationOptions = {
-    header: null,
+    title: 'TODO',
   };
 
-  render() {
-    return (
-      <View style={styles.container}>
-        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-          <View style={styles.welcomeContainer}>
-            <Image
-              source={
-                __DEV__
-                  ? require('../assets/images/robot-dev.png')
-                  : require('../assets/images/robot-prod.png')
-              }
-              style={styles.welcomeImage}
-            />
-          </View>
+  state={
+    tasks: [],
+    text: ""
+  };
 
-          <View style={styles.getStartedContainer}>
-            {this._maybeRenderDevelopmentModeWarning()}
+  changeTextHandler = text => {
+    this.setState({text: text} );
+  };
 
-            <Text style={styles.getStartedText}>Get started by opening</Text>
+  addTask = () => {
+    let notEmpty = this.state.text.trim().length > 0;
+        
+    if (notEmpty){
+      this.setState(
+        prevState => {
+          let { tasks, text} = prevState;
+          return {
+            tasks: tasks.concat({ key: tasks.length, text: text}),
+            text: ""
+          };
+        },
+        () => this.Tasks.save(this.state.tasks)
+      );
+    }
+  
+  };
 
-            <View style={[styles.codeHighlightContainer, styles.homeScreenFilename]}>
-              <MonoText style={styles.codeHighlightText}>screens/HomeScreen.js</MonoText>
-            </View>
+  deleteTask = (i) => {
 
-            <Text style={styles.getStartedText}>
-              Am I allowed to change I dont know text.
-            </Text>
-          </View>
+    this.setState(
+      prevState => {
+        let tasks = prevState.tasks.slice();
+        tasks.splice(i,1)
 
-          <View style={styles.helpContainer}>
-            <TouchableOpacity onPress={this._handleHelpPress} style={styles.helpLink}>
-              <Text style={styles.helpLinkText}>Help, it didn’t automatically reload!</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        <View style={styles.tabBarInfoContainer}>
-          <Text style={styles.tabBarInfoText}>This is a tab bar. You can edit it in:</Text>
-
-          <View style={[styles.codeHighlightContainer, styles.navigationFilename]}>
-            <MonoText style={styles.codeHighlightText}>navigation/MainTabNavigator.js</MonoText>
-          </View>
-        </View>
-      </View>
+        return{ tasks: tasks};
+      },
+      () => this.Tasks.save(this.state.tasks)
     );
+  };
+
+  componentDidMount(){
+    Keyboard.addListener(
+      isAndroid ? "keyboardDidShow" : "keyboardWillShow",
+      e => this.setState({ viewPadding: e.endCoordinates.height + viewPadding})
+    );
+
+    Keyboard.addListener(
+      isAndroid ? "keyboardDidHide" : "keyboardWillHide",
+      () => this.setState({ viewPadding: viewPadding})
+    );
+  
+    this.Tasks.all(tasks => this.setState({ tasks: tasks || [] }));
   }
+
+  render() {
+    return (  
+      <View style={[styles.container, { paddingBottom: this.state.viewPadding }]} > 
+        <FlatList 
+          style={styles.list}
+          // Data from task
+          data={this.state.tasks}
+          // How should data look in app using function 
+          renderItem={ ({item, index})  => 
+            <View>
+              <View style={styles.listItemCont}>
+                <Text style={styles.listItem}>
+                  {item.text}
+                </Text>
+                <Button title="del" onPress={() => this.deleteTask(index)} /> 
+              </View>
+              <View style={styles.hr} /> 
+            </View>
+          }
+        />  
+
+      <TextInput 
+        style={styles.textInput}
+        onChangeText={this.changeTextHandler}
+        onSubmitEditing={this.addTask}
+        value={this.state.text}
+        placeholder="Add Task here"
+        returnKeyType="done"
+        returnKeyLabel="done"
+      />
+      </View>
+    );  
+  };
+
+  Tasks = {
+    convertToArrayOfObject(tasks, callback) {
+      return callback(
+        tasks ? tasks.split("||").map((task, i) => ({ key: i, text: task })) : []
+      );
+    },
+    convertToStringWithSeparators(tasks) {
+      return tasks.map(task => task.text).join("||");
+    },
+    all(callback) {
+      return AsyncStorage.getItem("TASKS", (err, tasks) =>
+        this.convertToArrayOfObject(tasks, callback)
+      );
+    },
+    save(tasks) {
+      AsyncStorage.setItem("TASKS", this.convertToStringWithSeparators(tasks));
+    }
+  };
+  
 
   _maybeRenderDevelopmentModeWarning() {
     if (__DEV__) {
@@ -96,12 +172,36 @@ export default class HomeScreen extends React.Component {
       'https://docs.expo.io/versions/latest/guides/up-and-running.html#can-t-see-your-changes'
     );
   };
-}
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  list : {
+    width: "100%"
+  },
+  listItem: {
+    paddingTop: 5,
+    paddingBottom: 5,
+    fontSize: 18
+  },
+  hr : {
+    height: 1,
+    backgroundColor: "gray"
+  },
+  listItemCont: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between"
+  },
+  textInput:{
+    height: 40,
+    paddingRight: 10,
+    paddingLeft: 10,
+    borderColor: "black",
+    width: "100%"
   },
   developmentModeText: {
     marginBottom: 20,
